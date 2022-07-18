@@ -1,0 +1,34 @@
+{
+  "name": "fize/third-pingan",
+  "description": "平安云API。",
+  "authors": [
+    {
+      "name": "Fize",
+      "email": "chenfengzhan@qq.com"
+    }
+  ],
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Fize\\Third\\PingAn\\": "src"
+    }
+  },
+  "require": {
+    "php": ">=7.1.0",
+    "ext-curl": "*",
+    "ext-fileinfo": "*",
+    "fize/codec": "^5.0.0",
+    "fize/http": "^3.0.1",
+    "fize/security": "^2.0.0"
+  },
+  "suggest": {
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5.0"
+  }
+}
