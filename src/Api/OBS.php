@@ -115,7 +115,7 @@ class OBS extends Api
         if (is_null($expires)) {
             $expires = time() + 15 * 60;
         }
-        $bucket = $bucket ? $bucket : $this->bucket;
+        $bucket = $bucket ?: $this->bucket;
 
         $the_request_resource = "/" . $bucket . '/' . $key;
         if ($content_disposition) {
