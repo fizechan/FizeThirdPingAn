@@ -70,19 +70,9 @@ class OBS extends Api
             $url = 'https://obs-cn-shanghai-papub.fincloud.pinganyun.com/' . $bucket . '/' . $key;  // 内网
         }
 
-        $the_request_resource = "/" . $bucket . '/' . $key;
+        $request_resource = "/" . $bucket . '/' . $key;
         $http_verb = 'PUT';
-        $content_md5 = '';
-        $content_type = mime_content_type($file);
-        $date = gmdate('D, d M Y H:i:s T');
-        $user_defined_meta_headers = [];
-        $authorization = $this->getAuthorization($the_request_resource, $http_verb, $content_md5, $content_type, $date, $user_defined_meta_headers);
-
-        $headers = [
-            'Authorization' => $authorization,
-            'Content-Type'  => $content_type,
-            'Date'          => $date
-        ];
+        $headers = $this->getHeaders($file, $request_resource, $http_verb);
         $opts = [
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
@@ -91,7 +81,6 @@ class OBS extends Api
         ];
 
         $data = file_get_contents($file);
-
         $response = ClientSimple::put($url, $data, $headers, $opts, ['time_out' => 3000]);
         if (!$response->hasHeader('etag')) {
             throw new RuntimeException("上传失败！");
@@ -117,11 +106,11 @@ class OBS extends Api
         }
         $bucket = $bucket ?: $this->bucket;
 
-        $the_request_resource = "/" . $bucket . '/' . $key;
+        $request_resource = "/" . $bucket . '/' . $key;
         if ($content_disposition) {
-            $the_request_resource .= '?response-content-disposition=' . $content_disposition;
+            $request_resource .= '?response-content-disposition=' . $content_disposition;
         }
-        $sign = $this->getSign($the_request_resource, 'GET', $expires, '', '', $params);
+        $sign = $this->getSign($request_resource, 'GET', $expires, '', '', $params);
 
         $url = '';
         //$url .= 'https://' . $bucket . '.obs-cn-shanghai.pinganyun.com/' . $key;
@@ -134,7 +123,7 @@ class OBS extends Api
         }
 
         foreach ($params as $key => $val) {
-            $url .= "&{$key}=" . urlencode($val);
+            $url .= "&$key=" . urlencode($val);
         }
         return $url;
     }
@@ -158,9 +147,7 @@ class OBS extends Api
             $key = basename($file);
         }
         $key = urlencode($key);
-
         $bucket = $bucket ?: $this->bucket;
-
         $init = $this->putObjectMultipartInit($file, $key, $bucket);
 
         $etags = [];
@@ -189,26 +176,15 @@ class OBS extends Api
     {
         $url = self::DOMAIN . '/' . $bucket . '/' . $key . '?uploads';
 
-        $the_request_resource = "/" . $bucket . '/' . $key . '?uploads';
+        $request_resource = "/" . $bucket . '/' . $key . '?uploads';
         $http_verb = 'POST';
-        $content_md5 = '';
-        $content_type = mime_content_type($file);
-        $date = gmdate('D, d M Y H:i:s T');
-        $user_defined_meta_headers = [];
-        $authorization = $this->getAuthorization($the_request_resource, $http_verb, $content_md5, $content_type, $date, $user_defined_meta_headers);
-
-        $headers = [
-            'Authorization' => $authorization,
-            'Content-Type'  => $content_type,
-            'Date'          => $date
-        ];
+        $headers = $this->getHeaders($file, $request_resource, $http_verb);
         $opts = [
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0
         ];
 
         $response = ClientSimple::post($url, '', $headers, $opts, ['time_out' => 3000]);
-
         $array = XML::decode($response->getBody());
         return $array;
     }
@@ -225,34 +201,20 @@ class OBS extends Api
     protected function putObjectMultipartUpload(string $upload_id, string $data, int $part_number, string $key, string $bucket): string
     {
         $url = self::DOMAIN . '/' . $bucket . '/' . $key . '?partNumber=' . $part_number . '&uploadId=' . urlencode($upload_id);
-        $the_request_resource = "/" . $bucket . '/' . $key . '?partNumber=' . $part_number . '&uploadId=' . $upload_id;
-
+        $request_resource = "/" . $bucket . '/' . $key . '?partNumber=' . $part_number . '&uploadId=' . $upload_id;
         $http_verb = 'PUT';
-        $content_md5 = '';
-        $content_type = 'application/octet-stream';
-        $date = gmdate('D, d M Y H:i:s T');
-        $user_defined_meta_headers = [];
-        $authorization = $this->getAuthorization($the_request_resource, $http_verb, $content_md5, $content_type, $date, $user_defined_meta_headers);
-
-        $headers = [
-            'Authorization' => $authorization,
-            'Content-Type'  => $content_type,
-            'Date'          => $date
-        ];
+        $headers = $this->getHeaders(null, $request_resource, $http_verb);
 
         $temp = tmpfile();
         fwrite($temp, $data);
         rewind($temp);
-
         $opts = [
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_PUT            => true,
             CURLOPT_INFILE         => $temp
         ];
-
         $response = ClientSimple::put($url, $data, $headers, $opts, ['time_out' => 3000]);
-
         fclose($temp);
 
         if (!$response->hasHeader('etag')) {
@@ -272,20 +234,9 @@ class OBS extends Api
     protected function putObjectMultipartComplete(string $upload_id, array $etags, string $key, string $bucket): bool
     {
         $url = self::DOMAIN . '/' . $bucket . '/' . $key . '?uploadId=' . $upload_id;
-
-        $the_request_resource = "/" . $bucket . '/' . $key . '?uploadId=' . $upload_id;
+        $request_resource = "/" . $bucket . '/' . $key . '?uploadId=' . $upload_id;
         $http_verb = 'POST';
-        $content_md5 = '';
-        $content_type = 'application/octet-stream';
-        $date = gmdate('D, d M Y H:i:s T');
-        $user_defined_meta_headers = [];
-        $authorization = $this->getAuthorization($the_request_resource, $http_verb, $content_md5, $content_type, $date, $user_defined_meta_headers);
-
-        $headers = [
-            'Authorization' => $authorization,
-            'Content-Type'  => $content_type,
-            'Date'          => $date
-        ];
+        $headers = $this->getHeaders(null, $request_resource, $http_verb);
         $opts = [
             CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => 0
@@ -301,5 +252,30 @@ class OBS extends Api
         $response = ClientSimple::post($url, $data, $headers, $opts, ['time_out' => 3000]);
         $array = XML::decode($response->getBody());
         return isset($array['ETag']);
+    }
+
+    /**
+     * @param string|null $file                      文件，为null时表示【application/octet-stream】
+     * @param string      $request_resource          请求资源标识
+     * @param string      $http_verb                 HTTP请求类型
+     * @param array       $user_defined_meta_headers 用户定义META头
+     * @return array
+     */
+    protected function getHeaders(?string $file, string $request_resource, string $http_verb, array $user_defined_meta_headers = []): array
+    {
+        $content_md5 = '';
+        if (is_null($file)) {
+            $content_type = 'application/octet-stream';
+        } else {
+            $content_type = mime_content_type($file);
+        }
+        $date = gmdate('D, d M Y H:i:s T');
+        $authorization = $this->getAuthorization($request_resource, $http_verb, $content_md5, $content_type, $date, $user_defined_meta_headers);
+        $headers = [
+            'Authorization' => $authorization,
+            'Content-Type'  => $content_type,
+            'Date'          => $date
+        ];
+        return $headers;
     }
 }
