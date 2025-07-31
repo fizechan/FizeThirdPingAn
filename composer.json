@@ -8,6 +8,7 @@
     }
   ],
   "license": "MIT",
+  "version": "0.2.0",
   "autoload": {
     "psr-4": {
       "Fize\\Third\\PingAn\\": "src"
@@ -18,7 +19,7 @@
     "ext-curl": "*",
     "ext-fileinfo": "*",
     "fize/codec": "^5.0.0",
-    "fize/http": "^3.0.1",
+    "fize/http": "^5.1.0",
     "fize/security": "^2.0.0"
   },
   "suggest": {

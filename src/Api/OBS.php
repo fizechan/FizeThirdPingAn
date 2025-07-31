@@ -4,7 +4,7 @@
 namespace Fize\Third\PingAn\Api;
 
 use Fize\Codec\XML;
-use Fize\Http\ClientSimple;
+use Fize\Http\ClientOnce;
 use Fize\Third\PingAn\Api;
 use RuntimeException;
 
@@ -81,7 +81,7 @@ class OBS extends Api
         ];
 
         $data = file_get_contents($file);
-        $response = ClientSimple::put($url, $data, $headers, $opts, ['time_out' => 3000]);
+        $response = ClientOnce::put($url, $data, $headers, $opts, null, 3000);
         if (!$response->hasHeader('etag')) {
             throw new RuntimeException("上传失败！");
         }
@@ -184,7 +184,7 @@ class OBS extends Api
             CURLOPT_SSL_VERIFYHOST => 0
         ];
 
-        $response = ClientSimple::post($url, '', $headers, $opts, ['time_out' => 3000]);
+        $response = ClientOnce::post($url, '', $headers, $opts, null, 3000);
         $array = XML::decode($response->getBody());
         return $array;
     }
@@ -214,7 +214,7 @@ class OBS extends Api
             CURLOPT_PUT            => true,
             CURLOPT_INFILE         => $temp
         ];
-        $response = ClientSimple::put($url, $data, $headers, $opts, ['time_out' => 3000]);
+        $response = ClientOnce::put($url, $data, $headers, $opts, null, 3000);
         fclose($temp);
 
         if (!$response->hasHeader('etag')) {
@@ -249,7 +249,7 @@ class OBS extends Api
         }
         $data = "<CompleteMultipartUpload>$data</CompleteMultipartUpload>";
 
-        $response = ClientSimple::post($url, $data, $headers, $opts, ['time_out' => 3000]);
+        $response = ClientOnce::post($url, $data, $headers, $opts, null, 3000);
         $array = XML::decode($response->getBody());
         return isset($array['ETag']);
     }
